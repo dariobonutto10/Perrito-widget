@@ -1,11 +1,11 @@
 # 🐶 Perrito Widget
 
-Un perrito de escritorio para Windows 11 que teclea y mueve el mouse contigo.
+Un dálmata chibi (chiquito) de escritorio para Windows 11 que teclea y mueve el mouse contigo.
 
 - 👀 Sus ojos siguen el cursor y parpadea.
-- 🖱️ Una patita mueve el mouse cuando tú lo mueves; se pone verde al hacer clic.
-- ⌨️ La otra patita teclea y salen teclitas voladoras con la letra que presionas.
-- 🐕 Mueve la cola y las orejas más rápido cuando escribes.
+- 🐾 Las patitas descansan quietas y **solo bajan al teclado cuando presionas una tecla**.
+- 🖱️ Si mueves el mouse, una patita va al mouse y lo mueve (se pone verde al hacer clic).
+- ⌨️ Si el mouse está quieto, usa **las dos patitas** para teclear. Salen teclitas voladoras con cada letra.
 
 <!-- Agrega aquí una captura o GIF: ![demo](docs/demo.gif) -->
 
