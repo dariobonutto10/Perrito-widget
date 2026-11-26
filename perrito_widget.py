@@ -19,12 +19,35 @@ import os
 import random
 import sys
 import time
+import traceback
 
-from pynput import keyboard, mouse
-from PySide6.QtCore import QPointF, QRectF, Qt, QTimer, Signal
-from PySide6.QtGui import (QColor, QCursor, QFont, QGuiApplication, QPainter,
-                           QPen, QPixmap)
-from PySide6.QtWidgets import QApplication, QMenu, QWidget
+
+def fatal(msg):
+    """Muestra el error en una ventana (y lo guarda), porque con pythonw no hay consola."""
+    try:
+        log = os.path.join(os.path.expanduser("~"), "perrito_widget_error.log")
+        with open(log, "a", encoding="utf-8") as f:
+            f.write(time.strftime("%Y-%m-%d %H:%M:%S") + "\n" + msg + "\n\n")
+    except OSError:
+        pass
+    try:
+        import ctypes
+        ctypes.windll.user32.MessageBoxW(0, msg[-1500:], "Perrito Widget - error", 0x10)
+    except Exception:
+        print(msg, file=sys.stderr)
+
+
+try:
+    from pynput import keyboard, mouse
+    from PySide6.QtCore import QPointF, QRectF, Qt, QTimer, Signal
+    from PySide6.QtGui import (QColor, QCursor, QFont, QGuiApplication, QIcon,
+                               QPainter, QPen, QPixmap)
+    from PySide6.QtWidgets import (QApplication, QMenu, QSystemTrayIcon,
+                                   QWidget)
+except ImportError:
+    fatal("Faltan dependencias. Abre una terminal y ejecuta:\n\n"
+          "pip install PySide6 pynput\n\n" + traceback.format_exc())
+    sys.exit(1)
 
 SPR_W = 200      # ancho del perrito en pantalla (a escala 1.0)
 ML, MR = 40, 6   # márgenes: a la izquierda va el mouse
@@ -54,7 +77,10 @@ class Dog(QWidget):
         # cuadros 1..9 del sprite
         self.frames = {n: QPixmap(resource(f"assets/frame_{n}.png")) for n in range(1, 10)}
         if self.frames[1].isNull():
-            raise SystemExit("Faltan los archivos de la carpeta 'assets'.")
+            raise FileNotFoundError(
+                "No se encontró la carpeta 'assets' junto a perrito_widget.py.\n"
+                "Descomprime TODO el zip y ejecuta el script desde esa carpeta.\n\n"
+                "Buscado en: " + resource("assets"))
         pm = self.frames[1]
         self.spr_h = SPR_W * pm.height() / pm.width()
         self.base_w = ML + SPR_W + MR
@@ -247,8 +273,32 @@ class Dog(QWidget):
             p.restore()
 
 
-if __name__ == "__main__":
+def main():
     app = QApplication(sys.argv)
-    dog = Dog()
-    dog.show()
+
+    def hook(exc_type, exc, tb):
+        fatal("".join(traceback.format_exception(exc_type, exc, tb)))
+        app.quit()
+    sys.excepthook = hook
+
+    try:
+        dog = Dog()
+        dog.show()
+        dog.raise_()
+
+        # ícono en la bandeja del sistema (junto al reloj) para poder cerrarlo siempre
+        tray = QSystemTrayIcon(QIcon(dog.frames[1]), dog)
+        menu = QMenu()
+        menu.addAction("Salir").triggered.connect(app.quit)
+        tray.setContextMenu(menu)
+        tray.setToolTip("Perrito Widget")
+        tray.show()
+        dog.tray, dog.tray_menu = tray, menu
+    except Exception:
+        fatal(traceback.format_exc())
+        sys.exit(1)
     sys.exit(app.exec())
+
+
+if __name__ == "__main__":
+    main()

@@ -25,7 +25,12 @@ pip install -r requirements.txt
 python perrito_widget.py
 ```
 
+Más fácil: haz doble clic en `ejecutar.bat` (instala lo necesario y lo inicia).
 Para ejecutarlo sin ventana de terminal usa `pythonw perrito_widget.py`.
+
+El perrito deja un ícono en la bandeja del sistema (junto al reloj) con la opción **Salir**.
+Si hay un error, aparece en una ventana y se guarda en `perrito_widget_error.log` dentro de tu carpeta de usuario.
+Importante: ejecuta el script desde la carpeta completa del proyecto, porque necesita `assets/` al lado.
 
 ## Controles
 
