@@ -61,8 +61,27 @@ MOUSE_ACTIVE_SECS = 0.6
 
 
 def resource(rel):
-    base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
-    return os.path.join(base, rel)
+    """Resuelve recursos tanto en Python como en el EXE de PyInstaller."""
+    candidates = []
+
+    # En un ejecutable --onefile, PyInstaller extrae los datos en _MEIPASS.
+    meipass = getattr(sys, "_MEIPASS", None)
+    if meipass:
+        candidates.append(os.path.join(meipass, rel))
+
+    # Alternativa: recursos distribuidos junto al EXE.
+    exe_dir = os.path.dirname(os.path.abspath(sys.executable))
+    candidates.append(os.path.join(exe_dir, rel))
+
+    # Ejecución normal desde el código fuente.
+    source_dir = os.path.dirname(os.path.abspath(__file__))
+    candidates.append(os.path.join(source_dir, rel))
+
+    for candidate in candidates:
+        if os.path.exists(candidate):
+            return candidate
+
+    return candidates[0] if candidates else os.path.join(source_dir, rel)
 
 
 class Dog(QWidget):
@@ -74,13 +93,25 @@ class Dog(QWidget):
         self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint | Qt.Tool)
         self.setAttribute(Qt.WA_TranslucentBackground)
 
-        # cuadros 1..9 del sprite
-        self.frames = {n: QPixmap(resource(f"assets/frame_{n}.png")) for n in range(1, 10)}
-        if self.frames[1].isNull():
+        # Cuadros 1..9 del sprite. Validamos todos los archivos para detectar
+        # paquetes incompletos y mostrar una ruta útil para diagnosticarlo.
+        frame_paths = {n: resource(f"assets/frame_{n}.png") for n in range(1, 10)}
+        missing = [path for path in frame_paths.values() if not os.path.isfile(path)]
+        if missing:
             raise FileNotFoundError(
-                "No se encontró la carpeta 'assets' junto a perrito_widget.py.\n"
-                "Descomprime TODO el zip y ejecuta el script desde esa carpeta.\n\n"
-                "Buscado en: " + resource("assets"))
+                "No se encontraron todos los cuadros de la mascota.\\n\\n"
+                "Archivos faltantes:\\n" + "\\n".join(missing) +
+                "\\n\\nVuelve a descargar el ejecutable generado por la última "
+                "compilación de GitHub Actions. El workflow debe incluir la carpeta "
+                "'assets' mediante PyInstaller."
+            )
+        self.frames = {n: QPixmap(frame_paths[n]) for n in range(1, 10)}
+        invalid = [n for n, pm in self.frames.items() if pm.isNull()]
+        if invalid:
+            raise RuntimeError(
+                "Hay imágenes PNG dañadas o ilegibles en assets: " +
+                ", ".join(str(n) for n in invalid)
+            )
         pm = self.frames[1]
         self.spr_h = SPR_W * pm.height() / pm.width()
         self.base_w = ML + SPR_W + MR

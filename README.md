@@ -30,7 +30,7 @@ Para ejecutarlo sin ventana de terminal usa `pythonw perrito_widget.py`.
 
 El perrito deja un ícono en la bandeja del sistema (junto al reloj) con la opción **Salir**.
 Si hay un error, aparece en una ventana y se guarda en `perrito_widget_error.log` dentro de tu carpeta de usuario.
-Importante: ejecuta el script desde la carpeta completa del proyecto, porque necesita `assets/` al lado.
+Importante: para ejecutar desde el código fuente, conserva la carpeta `assets/` junto a `perrito_widget.py`. El ejecutable generado por GitHub Actions incluye automáticamente esos recursos.
 
 ## Controles
 
@@ -64,9 +64,18 @@ Qué cuadro se usa en cada momento: 1 y 9 reposo, 5 parpadeo, 7 curioso, 2 y 8 p
 
 ## Crear el .exe tú mismo
 
-```bash
-pip install pyinstaller
-pyinstaller --onefile --noconsole --add-data "assets;assets" --name PerritoWidget perrito_widget.py
+Desde la carpeta raíz del proyecto (donde están `perrito_widget.py` y `assets/`):
+
+```powershell
+python -m pip install -r requirements.txt
+python -m pip install pyinstaller
+python -m PyInstaller --clean --noconfirm --onefile --noconsole --add-data "$env:GITHUB_WORKSPACE\\assets;assets" --name PerritoWidget perrito_widget.py
+```
+
+En una terminal local de Windows, si `GITHUB_WORKSPACE` no existe, reemplaza esa parte por `assets;assets`:
+
+```powershell
+python -m PyInstaller --clean --noconfirm --onefile --noconsole --add-data "assets;assets" --name PerritoWidget perrito_widget.py
 ```
 
 El resultado queda en `dist/PerritoWidget.exe`. El flujo de GitHub Actions incluido lo compila solo al publicar una etiqueta `v*` (por ejemplo `v1.0.0`) y lo adjunta al Release.
